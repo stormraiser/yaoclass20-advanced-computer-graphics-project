@@ -12,7 +12,7 @@ EnviromentLight::EnviromentLight(Point _center, double _radius, Texture *_textur
         for (j = 0; j < resolution; j++){
             tmp.u = (i + 0.5) / (resolution * 2);
             tmp.v = (j + 0.5) / resolution;
-            cache[i * resolution + j] = texture->value(tmp);
+            cache[i * resolution + j] = texture == 0 ? 1 : texture->value(tmp);
             powerRec[i * resolution + j] = cache[i * resolution + j].power() * (PI / resolution * sin(tmp.v * PI) * PI / resolution);
             tpower += powerRec[i * resolution + j];
         }
@@ -48,10 +48,10 @@ Ray EnviromentLight::shootRay(){
     Vector u = (ray.d ^ Vector(0, 0, 1)).normalized();
     Vector v = (ray.d ^ u).normalized();
     do{
-        sx = randReal();
-        sy = randReal();
+        sx = randReal() * 2 - 1;
+        sy = randReal() * 2 - 1;
     } while (sx * sx + sy * sy > 1);
-    ray.o = center + sx * u + sy * v - radius * ray.d;
+    ray.o = center + sx * radius * u + sy * radius * v - radius * ray.d;
     return ray;
 }
 
@@ -77,10 +77,11 @@ void EnviromentLight::emitPhoton(Ray &ray, RGBColor &_color){
     Vector u = (ray.d ^ Vector(0, 0, 1)).normalized();
     Vector v = (ray.d ^ u).normalized();
     do{
-        sx = randReal();
-        sy = randReal();
+        sx = randReal() * 2 - 1;
+        sy = randReal() * 2 - 1;
     } while (sx * sx + sy * sy > 1);
     ray.o = center + sx * radius * u + sy * radius * v - radius * ray.d;
+    //printf("%f %f %f %f %f %f\n", ray.o.x, ray.o.y, ray.o.z, ray.d.x, ray.d.y, ray.d.z);
     _color = cache[k] / cache[k].power();
 }
 
@@ -90,6 +91,6 @@ RGBColor EnviromentLight::dirColor(Vector &dir){
     if (tmp.u < 0)
         tmp.u += 1;
     tmp.v = asin(dir.z) * INVPI + 0.5;
-    RGBColor color = texture->value(tmp);
+    RGBColor color = texture == 0 ? 1 : texture->value(tmp);
     return color / tpower * 4 * PI * cr;
 }

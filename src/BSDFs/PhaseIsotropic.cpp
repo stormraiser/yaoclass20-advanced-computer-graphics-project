@@ -11,7 +11,7 @@ bool PhaseIsotropic::f(HitInfo &info) const{
 
 bool PhaseIsotropic::s(HitInfo &info) const{
     double pu, pv, pw;
-    mapToHemisphere(randReal(), randReal(), pu, pv, pw, 0);
+    mapToHemisphere(randReal(), randReal(), pu, pv, pw);
     info.wi = Vector(pu, pv, pw);
     if (rand() % 2 == 0)
         info.wi = -info.wi;

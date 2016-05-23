@@ -47,12 +47,14 @@ void PhotonMappingRenderer::buildPhotonMap(){
                 info.n1 = 1;
                 info.n2 = ht.obj->material->ior;
                 f = ht.obj->material->surfaceBSDF->s(info);
-                if ((ht.obj->material->surfaceBSDF->hasDiffuseComponent())){
+                //if ((ht.obj->material->surfaceBSDF->hasDiffuseComponent())){
+                //if (depth == 1) {
                     if (globalCount >= globalNum)
                         global.replace(info.hitPoint, ray.d, color);
                     else
                         global.insert(info.hitPoint, ray.d, color);
                     globalCount++;
+                //}
                     if ((isCaustic) && (depth > 1)){
                         //printf("%f %f %f\n", info.hitPoint.x, info.hitPoint.y, info.hitPoint.z);
                         //printf("c1\n");
@@ -62,7 +64,7 @@ void PhotonMappingRenderer::buildPhotonMap(){
                             caustic.insert(info.hitPoint, ray.d, color);
                         causticCount++;
                     }
-                }
+                //}
                 if ((!f) || (depth == maxDepth))
                     break;
                 if (info.type == HitInfo::Diffuse)
@@ -103,7 +105,7 @@ void PhotonMappingRenderer::buildPhotonMap(){
                     info.n1 = currentObj->material->ior;
                     info.n2 = ht2.obj->material->ior;
                     f = ht.obj->material->surfaceBSDF->s(info);
-                    if (ht.obj->material->surfaceBSDF->hasDiffuseComponent()){
+                    //if (ht.obj->material->surfaceBSDF->hasDiffuseComponent()){
                         if (globalCount >= globalNum)
                             global.replace(info.hitPoint, ray.d, color);
                         else
@@ -117,7 +119,7 @@ void PhotonMappingRenderer::buildPhotonMap(){
                                 caustic.insert(info.hitPoint, ray.d, color);
                             causticCount++;
                         }
-                    }
+                    //}
                     if ((!f) || (depth == maxDepth))
                         break;
                     if (info.type == HitInfo::Diffuse)
@@ -171,7 +173,7 @@ void PhotonMappingRenderer::buildPhotonMap(){
                     else
                         info.n2 = 1;
                     f = currentObj->material->surfaceBSDF->s(info);
-                    if (ht.obj->material->surfaceBSDF->hasDiffuseComponent()){
+                    //if (ht.obj->material->surfaceBSDF->hasDiffuseComponent()){
                         if (globalCount >= globalNum)
                             global.replace(info.hitPoint, ray.d, color);
                         else
@@ -185,7 +187,7 @@ void PhotonMappingRenderer::buildPhotonMap(){
                                 caustic.insert(info.hitPoint, ray.d, color);
                             causticCount++;
                         }
-                    }
+                    //}
                     if ((!f) || (depth == maxDepth))
                         break;
                     if (info.type == HitInfo::Diffuse)
@@ -243,8 +245,8 @@ RGBColor PhotonMappingRenderer::visualizePhoton(Ray ray){
     if (scene->hit(ray, ht, Scene::HitAll)){
         info.set(ht);
         ht.obj->getHitInfo(info);
-        global.volumeGather(info.hitPoint, 0.05, 1);
-        caustic.volumeGather(info.hitPoint, 0.05, 1);
+        global.volumeGather(info.hitPoint, 0.02, 1);
+        caustic.volumeGather(info.hitPoint, 0.02, 1);
         //global.surfaceGather(info.hitPoint, info.normal, 0.1, 0.1, 1);
         //caustic.surfaceGather(info.hitPoint, info.normal, 0.1, 0.1, 1);
     }
@@ -267,8 +269,9 @@ RGBColor PhotonMappingRenderer::visualizePhoton(Ray ray){
     //printf("# 4");
     //if (f)
     //    printf("! %f %f %f\n", photonColor.r, photonColor.g, photonColor.b);
-    if (f)
+    if (f) {
         return photonColor;
+    }
     else
         return 0;
 }
@@ -396,8 +399,8 @@ RGBColor PhotonMappingRenderer::globalGather(BSDF *bsdf, HitInfo &info){
     RGBColor ret = 0;
     vector<pair<double, int> >::iterator q;
 
-    //global.surfaceGather(info.hitPoint, info.normal, searchRadius, 0.1, globalGatherNum);
-    global.volumeGather(info.hitPoint, searchRadius, globalGatherNum);
+    global.surfaceGather(info.hitPoint, info.normal, searchRadius, 0.1, globalGatherNum);
+    //global.volumeGather(info.hitPoint, searchRadius, globalGatherNum);
     if (global.gatheredPhoton.size() == 0)
         return 0;
     r = global.currentRadius;
@@ -433,8 +436,8 @@ RGBColor PhotonMappingRenderer::causticGather(BSDF *bsdf, HitInfo &info){
     RGBColor ret = 0;
     vector<pair<double, int> >::iterator q;
 
-    //caustic.surfaceGather(info.hitPoint, info.normal, searchRadius, 0.1, causticGatherNum);
-    caustic.volumeGather(info.hitPoint, searchRadius, causticGatherNum);
+    caustic.surfaceGather(info.hitPoint, info.normal, searchRadius, 0.1, causticGatherNum);
+    //caustic.volumeGather(info.hitPoint, searchRadius, causticGatherNum);
     if (caustic.gatheredPhoton.size() == 0)
         return 0;
     r = caustic.currentRadius;
@@ -457,8 +460,8 @@ RGBColor PhotonMappingRenderer::causticGather(BSDF *bsdf, HitInfo &info){
 }
 
 RGBColor PhotonMappingRenderer::volumeGather(BSDF *bsdf, HitInfo &info, double scatterRate){
-    double searchRadius = 20 * pow(scene->power() * globalGatherNum / totalEmit / (1 - scatterRate), 1.0 / 3);
-    //double searchRadius = INF;
+    //double searchRadius = 20 * pow(scene->power() * globalGatherNum / totalEmit / (1 - scatterRate), 1.0 / 3);
+    double searchRadius = INF;
 
     int n, i;
     double r, w = 0, rt, wt;
@@ -469,6 +472,7 @@ RGBColor PhotonMappingRenderer::volumeGather(BSDF *bsdf, HitInfo &info, double s
     if (volume.gatheredPhoton.size() == 0)
         return 0;
     r = volume.currentRadius;
+    //printf("%f %f %f %d %f\n", info.hitPoint.x, info.hitPoint.y, info.hitPoint.z, volume.gatheredPhoton.size(), r);
     i = 0;
     for (q = volume.gatheredPhoton.begin(); q != volume.gatheredPhoton.end(); q++){
         Photon &p = volume.photonList[q->second];
@@ -498,7 +502,7 @@ RGBColor PhotonMappingRenderer::trace(Ray ray, int depth, int index, Primitive *
     int i;
     double scatterDis, insideLength, insideHit;
 
-    //printf("> %d %d\n", depth, currentObj == 0 ? -1 : currentObj->id);
+    //printf("> %d %d\n", depth, (currentObj == 0) ? -1 : currentObj->id);
     //printf("%f %f %f %f %f %f\n", ray.o.x, ray.o.y, ray.o.z, ray.d.x, ray.d.y, ray.d.z);
 
     ray.tMin = EPSILON;
@@ -507,7 +511,7 @@ RGBColor PhotonMappingRenderer::trace(Ray ray, int depth, int index, Primitive *
     info.sx = randReal();
     info.sy = randReal();
     info.wo = -ray.d.normalized();
-    info.n1 = currentObj == 0 ? 1 : currentObj->material->ior;
+    info.n1 = (currentObj == 0) ? 1 : currentObj->material->ior;
     if (currentObj == 0){
         //printf(">> 1\n");
         if (scene->hit(ray, hitPoint, Scene::HitAll)){
@@ -519,7 +523,7 @@ RGBColor PhotonMappingRenderer::trace(Ray ray, int depth, int index, Primitive *
             info.n2 = hitPoint.obj->material->ior;
         }
         else
-            return scene->background(ray.d);
+            return (isPrimary && (renderMode & DirectComponent != 0)) ? scene->background(ray.d) : 0;
         if (isPrimary){
             ret += direct(hitPoint, info);
             ret += indirect(hitPoint, info, currentObj, hitPoint.obj, depth, index);
@@ -541,9 +545,13 @@ RGBColor PhotonMappingRenderer::trace(Ray ray, int depth, int index, Primitive *
         if (currentObj->csg == 0){
             if (!currentObj->hit(ray, ht)){
                 printf("!\n");
-                //printf("> %d %d\n", depth, currentObj == 0 ? -1 : currentObj->id);
-                //printf("%f %f %f %f %f %f\n", ray.o.x, ray.o.y, ray.o.z, ray.d.x, ray.d.y, ray.d.z);
-                return 0;
+                printf("> %d %d\n", depth, currentObj == 0 ? -1 : currentObj->id);
+                printf("%f %f %f %f %f %f\n", ray.o.x, ray.o.y, ray.o.z, ray.d.x, ray.d.y, ray.d.z);
+                //return 0;
+                insideLength = INF;
+            }
+            else {
+                insideLength = ray.d.norm() * ht.t;
             }
         }
         else{
@@ -551,11 +559,14 @@ RGBColor PhotonMappingRenderer::trace(Ray ray, int depth, int index, Primitive *
                 //printf("!\n");
                 //printf("> %d %d\n", depth, currentObj == 0 ? -1 : currentObj->id);
                 //printf("%f %f %f %f %f %f\n", ray.o.x, ray.o.y, ray.o.z, ray.d.x, ray.d.y, ray.d.z);
-                return 0;
+                //return 0;
+                insideLength = INF;
+            }
+            else {
+                insideLength = ray.d.norm() * ht.t;
             }
         }
         //printf("* %f\n", ht.t);
-        insideLength = ray.d.norm() * ht.t;
         ray.tMax = ht.t;
         if (scene->hit(ray, ht2, Scene::HitHigher, currentObj->layer))
             insideHit = ray.d.norm() * ht2.t;
@@ -610,14 +621,18 @@ RGBColor PhotonMappingRenderer::trace(Ray ray, int depth, int index, Primitive *
         }
         else{
             info.hitPoint = ray.o + ray.d / ray.d.norm() * scatterDis;
+            /*
             if (isPrimary){
                 ret += volumeIndirect(info, currentObj, depth, index);
                 return ret;
             }
             else{
+            */
                 ret += volumeGather(currentObj->material->scatterBSDF, info, currentObj->material->scatterRate);
                 return ret;
+            /*
             }
+            */
         }
     }
 }

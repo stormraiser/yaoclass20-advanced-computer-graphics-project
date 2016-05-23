@@ -28,6 +28,7 @@
 #include "BSDFs/FresnelBSDF.h"
 #include "BSDFs/FresnelBlendBSDF.h"
 #include "BSDFs/MappingBlendedBSDF.h"
+#include "BSDFs/NullBSDF.h"
 
 #include "Mappings/PureColor.h"
 #include "Mappings/CheckerColor.h"

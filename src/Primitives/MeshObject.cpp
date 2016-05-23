@@ -11,6 +11,7 @@ int subtreeXorMask[8] = {0, 1, 2, 4, 3, 5, 6, 7};
 
 void MeshObject::loadOBJ(char *filename){
     ifstream fin(filename);
+    printf("%s\n", filename);
     char ch;
     int p, q, r, i;
     Point pos;
@@ -26,6 +27,7 @@ void MeshObject::loadOBJ(char *filename){
             fin >> pos.x >> pos.y >> pos.z;
             vertices.push_back(pos);
             bbox.extend(pos);
+            //printf("v %f %f %f\n", pos.x, pos.y, pos.z);
         }
         else if (ch == 'f'){
             fin >> p >> q >> r;
@@ -33,6 +35,7 @@ void MeshObject::loadOBJ(char *filename){
             q--;
             r--;
             faces.emplace_back(p, q, r);
+            //printf("f %d %d %d\n", p, q, r);
         }
         fin.ignore(10000, '\n');
     }
@@ -76,9 +79,10 @@ void MeshObject::loadOBJ(char *filename){
 void MeshObject::makeTree(int k, int depth, BoundingBox box){
     if ((tree[k].faceList.size() <= LEAF_SIZE_LIMIT) || (depth >= DEPTH_LIMIT))
         return;
+    int oldSize = tree.size();
     int i, j, p;
+    int t = 0;
     BoundingBox bt;
-    tree[k].isLeaf = false;
     vector<int> tmp;
     for (i = 0; i < 8; i++){
         tmp.clear();
@@ -89,14 +93,31 @@ void MeshObject::makeTree(int k, int depth, BoundingBox box){
         }
         if (!tmp.empty()){
             //printf("!\n");
+            t += tmp.size();
             p = tree.size();
             tree.resize(p + 1);
             tree[k].children[i] = p;
             tree[p].faceList = tmp;
-            makeTree(p, depth + 1, bt);
+        }
+        else {
+            tree[k].children[i] = -1;
         }
     }
-    tree[k].faceList.clear();
+    if (t < tree[k].faceList.size() * 2) {
+        tree[k].isLeaf = false;
+        tree[k].faceList.clear();
+        for (int i = 0; i < 8; i++) {
+            if (tree[k].children[i] != -1) {
+                makeTree(tree[k].children[i], depth + 1, box.octant(i));
+            }
+        }
+    }
+    else {
+        tree.resize(oldSize);
+        for (int i = 0; i < 8; i++) {
+            tree[k].children[i] = -1;
+        }
+    }
 }
 
 bool MeshObject::hitFace(const Ray &ray, int k, double &t){
@@ -117,11 +138,14 @@ bool MeshObject::faceCubeIntersect(int k, const BoundingBox &box){
     int p, q, r;
     BoundingBox bt;
     std::tie(p, q, r) = faces[k];
+    /*
     for (i = 0; i < 8; i++)
         c += ((box.vertex(i) - vertices[p]) * faceNormals[k] > 0);
     if ((c == 0) || (c == 8))
         return false;
+    */
     bt.extend(vertices[p]).extend(vertices[q]).extend(vertices[r]);
+    //printf("%f %f %f %f %f %f %f %f %f %f %f %f %d\n", box.x1, box.x2, box.y1, box.y2, box.z1, box.z2, bt.x1, bt.x2, bt.y1, bt.y2, bt.z1, bt.z2, box.disjoint(bt));
     return !(box.disjoint(bt));
 }
 
@@ -139,7 +163,7 @@ int MeshObject::hitOctree(const Ray &ray, int k, const BoundingBox &box, double 
                     t = t2;
                     ret = tree[k].faceList[i];
                 }
-        if (t < tMax2)
+        if (t <= tMax2 + EPSILON)
             return ret;
         else
             return -1;
@@ -166,8 +190,29 @@ bool MeshObject::hit(Ray ray){
 
 bool MeshObject::hit(Ray ray, HitPoint &hitPoint){
     HIT_ROUTINE
-    double t;
+    double t = INF;
     rayDir = dirRevIndex(ray.d.x, ray.d.y, ray.d.z);
+
+    /*
+    int ret = -1;
+    double t2;
+    for (int i = 0; i < fNum; i++) {
+        if (hitFace(ray, i, t2)) {
+            if ((ret == -1) || (t2 < t)) {
+                t = t2;
+                ret = i;
+            }
+        }
+    }
+    if (ret == -1)
+        return false;
+    if (ray.d * faceNormals[ret] < 0)
+        hitPoint.set(t, ret, HitPoint::HitIn, this);
+    else
+        hitPoint.set(t, ret, HitPoint::HitOut, this);
+    */
+
+    ///*
     int k = hitOctree(ray, 0, bbox.rayIntersection(ray), t);
     if (k == -1)
         return false;
@@ -175,6 +220,8 @@ bool MeshObject::hit(Ray ray, HitPoint &hitPoint){
         hitPoint.set(t, k, HitPoint::HitIn, this);
     else
         hitPoint.set(t, k, HitPoint::HitOut, this);
+    //*/
+
     return true;
 }
 

@@ -56,9 +56,9 @@ void Film::setResult(const RGBColor &color){
     image(cx, cy, 0, 1) += (!(color.g >= 0)) ? 0 : ((color.g <= 3) ? color.g : 3);
     image(cx, cy, 0, 2) += (!(color.b >= 0)) ? 0 : ((color.b <= 3) ? color.b : 3);
     */
-    image(cx, cy, 0, 0) += (!(color.r >= 0)) ? 0 : color.r;
-    image(cx, cy, 0, 1) += (!(color.g >= 0)) ? 0 : color.g;
-    image(cx, cy, 0, 2) += (!(color.b >= 0)) ? 0 : color.b;
+    image(cx, cy, 0, 0) += (!(color.r >= 0)) ? 0 : (color.r > 1 ? 1 : color.r);
+    image(cx, cy, 0, 1) += (!(color.g >= 0)) ? 0 : (color.g > 1 ? 1 : color.g);
+    image(cx, cy, 0, 2) += (!(color.b >= 0)) ? 0 : (color.b > 1 ? 1 : color.b);
     if (directDisplay == true){
         dcolor[0] = pow(image(cx, cy, 0, 0) / (1 + currentIndex / (w * h)), 1.0 / 2.2) * 255;
         dcolor[1] = pow(image(cx, cy, 0, 1) / (1 + currentIndex / (w * h)), 1.0 / 2.2) * 255;

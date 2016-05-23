@@ -34,7 +34,6 @@ bool SquareLight::shootShadowRay(const Point &_pos, Ray &ray, RGBColor &_color){
     ray.d /= dis;
     ray.tMin = EPSILON;
     ray.tMax = dis - EPSILON;
-    //_color = color * power / (dis * dis * 4 * PI);
     _color = color * power * (-dir * ray.d) / (dis * dis * PI);
     return true;
 }

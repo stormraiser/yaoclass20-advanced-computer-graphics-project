@@ -46,10 +46,10 @@ Point Photon::pos(){
 }
 
 Vector Photon::dir(){
-    return photonDir[theta][phi];
-    /*
+    //return photonDir[theta][phi];
+    ///*
     double d1 = ((theta + 0.5) / 256 - 0.5) * PI * 2;
     double d2 = ((phi + 0.5) / 256 - 0.5) * PI;
     return Vector(cos(d2) * cos(d1), cos(d2) * sin(d1), sin(d2));
-    */
+    //*/
 }

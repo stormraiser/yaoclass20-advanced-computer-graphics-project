@@ -13,10 +13,6 @@ Ray SpotLight::shootRay(){
             if (randReal() > (ang - angle) / (falloff))
                 return Ray(pos, d);
     }
-
-    double t0 = angle * DEG2RAD;
-    double t1 = (angle + falloff) * DEG2RAD;
-    w = (1 - cos(t0) + t1 / (t1 - t0) * (cos(t0) - cos(t1)) + 1 / (t1 - t0) * (t1 * cos(t1) - t0 * cos(t0) - sin(t1))) * 0.5;
 }
 
 bool SpotLight::shootShadowRay(const Point &_pos, Ray &ray, RGBColor &_color){
@@ -26,13 +22,14 @@ bool SpotLight::shootShadowRay(const Point &_pos, Ray &ray, RGBColor &_color){
     ray.tMin = EPSILON;
     ray.tMax = dis - EPSILON;
     ray.d /= dis;
-    double ang = acos(-ray.d * dir / dis) * RAD2DEG;
+    double ang = acos(-ray.d * dir) * RAD2DEG;
     if (ang > angle + falloff)
         return false;
     else if (ang < angle)
-        _color = color / w * power / (dis * dis);
+        _color = color * power / (dis * dis * w);
     else
-        _color = color * (angle + falloff - ang) / falloff / w * power / (dis * dis * 4 * PI);
+        _color = color * ((angle + falloff - ang) / falloff) * power / (dis * dis * w);
+    return true;
 }
 
 void SpotLight::emitPhoton(Ray &ray, RGBColor &_color){
